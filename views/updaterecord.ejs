@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Select Date for Update</title>
+    <link rel="stylesheet" href="/styles/dateSelect.css">
+</head>
+<body>
+    <h2>Select the Date to Modify</h2>
+    
+    <form action="/datetoUpdate" method="POST">
+        <label for="date">Enter Date:</label>
+        <input type="date" id="date" name="date" required>
+        <% if (error) { %>
+            <p><%= error %></p>
+        <% } %>
+        <button type="submit">Submit</button>
+    </form>
+</body>
+</html>
