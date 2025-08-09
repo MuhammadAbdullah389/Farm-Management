@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Haider Dairies - Reports</title>
-    <link rel="stylesheet" href="/styles/home.css">
+    <link rel="stylesheet" href="/styles/allmonths.css">
 </head>
 <body>
     <header>
@@ -20,10 +20,12 @@
     </nav>
 
     <h3>Select a Month to View Reports</h3>
-    <ul>
+    <div>
+        <ul>
         <% months.forEach(month => { %>
             <li><a href="/getrep/<%= month %>">View Records for <%= month %></a></li>
         <% }) %>
     </ul>
+    </div>
 </body>
 </html>

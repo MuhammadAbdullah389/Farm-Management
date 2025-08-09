@@ -1,4 +1,4 @@
-const User = require("../controllers/userSchema"); 
+const User = require("../models/users"); 
 const saveUserToDb = async (name, email, password) => {
   
   const newUser = new User({

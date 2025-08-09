@@ -1,6 +1,6 @@
 require("dotenv").config();
 
-const User = require("./controllers/userSchema");
+const User = require("./models/users");
 const PORT = 3000;
 const milkPrice = 140;
 const express = require("express");
@@ -9,8 +9,8 @@ const curdate = require("./controllers/currentdate");
 const path = require("path")
 const session = require('express-session');
 const cookieParser = require("cookie-parser");
-const Submission = require("./controllers/schema");
-const MonthlyReport = require("./controllers/monthlyReportSchmea")
+const Submission = require("./models/dailyRecord");
+const MonthlyReport = require("./models/monthlyRecord")
 
 const { verifyUser } = require("./controllers/verifyUser");
 const { saveUserToDb } = require("./controllers/saveUser");
@@ -310,13 +310,46 @@ app.get("/login", (req, res) => {
 });
 
 app.post("/login" , async (req,res) => {
+    const userUid = req.cookies?.tId;
+
+    if (userUid) {
+        try {
+            const jwtToken = await getUser(userUid);
+            if (jwtToken && jwtToken.name) {
+                name = jwtToken.name;
+            } else {
+                console.log('JWT token missing name field.');
+            }
+        } catch (err) {
+            console.error('Error getting user:', err);
+            return res.status(500).send('Error decoding user token');
+        }
+    }
     const { email , password } = req.body;
     const user = await verifyUser(email , password);
     if (user){
         const token = setUser(user);
         const oneMonth = 30 * 24 * 60 * 60 * 1000;
         res.cookie("tId", token, { expires: new Date(Date.now() + oneMonth), httpOnly: true });
-        res.redirect("/home")
+        try {
+            const entry = await Submission.findOne({ date: curdate() });
+            const encodedDate = encodeURIComponent(curdate());
+
+            if (entry) {
+                res.render("insertedHome", { 
+                    msg: `Record against date ${curdate()} already exists`, 
+                    username: name, 
+                    date: curdate(), 
+                    link: encodedDate, 
+                    insertion: true 
+                });
+            } else {
+                res.redirect("/home");
+            }
+        } catch (err) {
+            console.error('Error fetching entry:', err);
+            res.status(500).send('Error fetching entry');
+        }
     }else {
         res.render("login" , { error : "Invalid Credentials!"})
     }
@@ -551,6 +584,21 @@ app.get("/getmonths", async (req, res) => {
 
 
 app.get("/getrep/:month", async (req, res) => {
+     const userUid = req.cookies?.tId;
+
+    if (userUid) {
+        try {
+            const jwtToken = await getUser(userUid);
+            if (jwtToken && jwtToken.name) {
+                name = jwtToken.name;
+            } else {
+                console.log('JWT token missing name field.');
+            }
+        } catch (err) {
+            console.error('Error getting user:', err);
+            return res.status(500).send('Error decoding user token');
+        }
+    }
     const monthYear = req.params.month; 
 
     const formattedMonth = convertToMonthYear(monthYear);
@@ -592,7 +640,7 @@ app.get("/getrep/:month", async (req, res) => {
         console.log(records);
         
         res.render('monthReport', {
-            username: "null", 
+            username: name, 
             date: new Date().toLocaleDateString(),
             month: month, 
             year: year, 
