@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Monthly Report</title>
+    <link rel="stylesheet" href="/styles/retrieve.css">
+</head>
+<body>
+    <header>
+        <h2>Monthly Report for <%= username %>!</h2>
+        <h4><%= date %></h4>
+    </header>
+
+    <nav>
+        <ul>
+            <li><a href="/">Dashboard</a></li>
+            <li><a href="/update">Update a Record</a></li>
+            <li><a href="/contact">Contact the Developer</a></li>
+        </ul>
+    </nav>
+
+    <h2>Monthly Entry Report</h2>
+
+    <h3>Month: <%= month %> <%= year %></h3>
+
+    <table>
+        <thead>
+            <tr>
+                <th>Date</th>
+                <th>Total Milk (liters)</th>
+                <th>Revenue by Milk (PKR)</th>
+                <th>Other Revenue (PKR)</th>
+                <th>Total Revenue (PKR)</th>
+                <th>Total Expenses (PKR)</th>
+                <th>Net Balance (PKR)</th>
+            </tr>
+        </thead>
+        <tbody>
+            <% let totalMilkForMonth = 0; %>
+            <% let totalRevenueFromMilk = 0; %>
+            <% let totalOtherRevenue = 0; %>
+            <% let totalRevenue = 0; %>
+            <% let totalExpenses = 0; %>
+            <% let netBalance = 0; %>
+
+            <% records.forEach(record => { %>
+                <% 
+                    let totalMilk = record.morningMilkQuantity + record.eveningMilkQuantity;
+                    let milkRevenue = totalMilk * 140; 
+                    let otherRev = record.totalRevenue - milkRevenue;
+                %>
+                <tr>
+                    <td><%= record.date %></td>
+                    <td><%= totalMilk %> liters</td>
+                    <td><%= milkRevenue %> PKR</td>
+                    <td><%= otherRev %> PKR</td>
+                    <td><%= record.totalRevenue %> PKR</td>
+                    <td><%= record.totalExpenditure %> PKR</td>
+                    <td><%= record.Balance %> PKR</td>
+                </tr>
+
+                <% 
+                    // Accumulate totals for the month
+                    totalMilkForMonth += totalMilk;
+                    totalRevenueFromMilk += milkRevenue;
+                    totalOtherRevenue += otherRev;
+                    totalRevenue += record.totalRevenue;
+                    totalExpenses += record.totalExpenditure;
+                    netBalance += record.Balance;
+                %>
+            <% }) %>
+        </tbody>
+    </table>
+
+    <h4>Aggregated Values for the Month</h4>
+    <table>
+        <tbody>
+            <tr>
+                <td>Total Milk for the Month</td>
+                <td><%= totalMilkForMonth %> liters</td>
+            </tr>
+            <tr>
+                <td>Total Revenue from Milk</td>
+                <td><%= totalRevenueFromMilk %> PKR</td>
+            </tr>
+            <tr>
+                <td>Total Other Revenue</td>
+                <td><%= totalOtherRevenue %> PKR</td>
+            </tr>
+            <tr>
+                <td>Total Revenue</td>
+                <td><%= totalRevenue %> PKR</td>
+            </tr>
+            <tr>
+                <td>Total Expenses</td>
+                <td><%= totalExpenses %> PKR</td>
+            </tr>
+        </tbody>
+    </table>
+
+    <h4>Monthly Report Summary</h4>
+    <table>
+        <tbody>
+            <tr>
+                <td>Opening Balance</td>
+                <td><%= monthlyRep.openingBalance %> PKR</td>
+            </tr>
+            <tr>
+                <td>Net Balance</td>
+                <td><%= monthlyRep.netBalance %> PKR</td>
+            </tr>
+            <tr>
+                <td>Closing Balance</td>
+                <td><%= monthlyRep.closingBalance %> PKR</td>
+            </tr>
+        </tbody>
+    </table>
+
+</body>
+</html>

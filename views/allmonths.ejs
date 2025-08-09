@@ -3,13 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Haider Dairies</title>
-    <link rel="stylesheet" href="/styles/updhome.css">
+    <title>Haider Dairies - Reports</title>
+    <link rel="stylesheet" href="/styles/home.css">
 </head>
 <body>
     <header>
         <h2>Welcome <%= username %>!</h2>
-        <h4><%= date %></h4>
     </header>
 
     <nav>
@@ -17,17 +16,14 @@
             <li><a href="/view">View Records</a></li>
             <li><a href="/update">Update a Record</a></li>
             <li><a href="/contact">Contact the Developer</a></li>
-            <li><a href="/getmonths">Get Reports</a></li>
         </ul>
     </nav>
 
-    <div>
-        <h2><%= msg %></h2>
-    </div>
-    <% if (insertion) { %>
-        <button onclick="location.href='/update/<%= link %>'" >Edit</button>
-    <% } %>
-     
-    <button onclick="location.href='/logout'" id="logout">LOGOUT</button>
+    <h3>Select a Month to View Reports</h3>
+    <ul>
+        <% months.forEach(month => { %>
+            <li><a href="/getrep/<%= month %>">View Records for <%= month %></a></li>
+        <% }) %>
+    </ul>
 </body>
 </html>

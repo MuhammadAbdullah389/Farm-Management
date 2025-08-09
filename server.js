@@ -4,11 +4,13 @@ const User = require("./controllers/userSchema");
 const PORT = 3000;
 const milkPrice = 140;
 const express = require("express");
+const moment = require('moment');
 const curdate = require("./controllers/currentdate");
 const path = require("path")
 const session = require('express-session');
 const cookieParser = require("cookie-parser");
 const Submission = require("./controllers/schema");
+const MonthlyReport = require("./controllers/monthlyReportSchmea")
 
 const { verifyUser } = require("./controllers/verifyUser");
 const { saveUserToDb } = require("./controllers/saveUser");
@@ -25,6 +27,60 @@ function formatDateToPKR(date) {
         day: '2-digit',  
     });
 }
+
+function formatDateToYMD(date) {
+            const d = new Date(date);
+            const year = d.getFullYear();
+            const month = (d.getMonth() + 1).toString().padStart(2, '0');
+            const day = d.getDate().toString().padStart(2, '0');
+            return `${year}-${month}-${day}`;
+}
+
+function convertToMonthYear(monthYear) {
+    const monthNames = [
+        "January", "February", "March", "April", "May", "June", 
+        "July", "August", "September", "October", "November", "December"
+    ];
+
+    const [monthName, year] = monthYear.split(" ");
+    
+    const monthIndex = monthNames.indexOf(monthName);
+
+    const month = (monthIndex + 1).toString().padStart(2, '0');
+    
+    return `${month}-${year}`;
+}
+
+function formatMonth(monthYear) {
+    const [month, year] = monthYear.split('-');
+    
+    const date = new Date(`${year}-${month}-01`);
+
+    const monthNames = [
+        "January", "February", "March", "April", "May", "June", 
+        "July", "August", "September", "October", "November", "December"
+    ];
+
+    const monthName = monthNames[date.getMonth()];
+
+    return `${monthName} ${year}`;
+}
+
+function formatToDatabaseMonth(monthName, year) {
+    const monthNames = {
+        "January": "01", "February": "02", "March": "03", "April": "04", "May": "05", "June": "06",
+        "July": "07", "August": "08", "September": "09", "October": "10", "November": "11", "December": "12"
+    };
+
+    const monthNumber = monthNames[monthName];
+
+    if (monthNumber) {
+        return `${monthNumber}-${year}`;
+    } else {
+        return null;
+    }
+}
+
 
 conn("mongodb://127.0.0.1:27017/farm");
 
@@ -46,29 +102,67 @@ app.use(express.static(path.join(__dirname, 'public')));
 app.use(express.urlencoded({extended : true}))
 app.use(express.json());
 
-app.get("/" , async (req , res) => {
+// app.get("/" , async (req , res) => {
+//     const userUid = req.cookies?.tId;
+//         if(userUid){
+//             const jwtToken = await getUser(userUid);
+//                     const { name } = jwtToken;
+//         }
+//     const entry = await Submission.findOne({ date: curdate() });
+//     encodedDate = encodeURIComponent(curdate());
+//     try {
+//         const entry = await Submission.findOne({ editdate: curdate() });
+//     }
+//      catch (err) {
+//         console.log(err)
+//     }
+//     if (entry){
+//         res.render("insertedHome" , { msg : `Record against date ${curdate()} already exists`, 
+//             username : name , date : curdate() , link : encodedDate , insertion : true})
+//     }else{
+//         res.redirect("/home");
+//     }
+// });
+
+app.get("/", async (req, res) => {
     const userUid = req.cookies?.tId;
-        if(userUid){
+    let name = '';
+
+    if (userUid) {
+        try {
             const jwtToken = await getUser(userUid);
-                    const { name } = jwtToken;
+            if (jwtToken && jwtToken.name) {
+                name = jwtToken.name;
+            } else {
+                console.log('JWT token missing name field.');
+            }
+        } catch (err) {
+            console.error('Error getting user:', err);
+            return res.status(500).send('Error decoding user token');
         }
-    const entry = await Submission.findOne({ date: curdate() });
-    encodedDate = encodeURIComponent(curdate());
+    }
+
     try {
-        const entry = await Submission.findOne({ editdate: curdate() });
-            // res.render('updatingrec', { entry: entry , postingDate : encodedDate});
-    }
-     catch (err) {
-        // res.render("updaterecord" , { error : "Something went wrong! Try Again later" });
-        console.log(err)
-    }
-    if (entry){
-        res.render("insertedHome" , { msg : `Record against date ${curdate()} already exists`, 
-            username : name , date : curdate() , link : encodedDate , insertion : true})
-    }else{
-        res.redirect("/home");
+        const entry = await Submission.findOne({ date: curdate() });
+        const encodedDate = encodeURIComponent(curdate());
+
+        if (entry) {
+            res.render("insertedHome", { 
+                msg: `Record against date ${curdate()} already exists`, 
+                username: name, 
+                date: curdate(), 
+                link: encodedDate, 
+                insertion: true 
+            });
+        } else {
+            res.redirect("/home");
+        }
+    } catch (err) {
+        console.error('Error fetching entry:', err);
+        res.status(500).send('Error fetching entry');
     }
 });
+
 
 app.get('/view', async (req, res) => {
     const entries = await Submission.find();
@@ -117,13 +211,56 @@ app.post('/submit', async (req, res) => {
         totalExpenditure: totalExpenses,
         Balance: balance,
     });
+
+    const [day, month, year] = currentDate.split('/');  
+    const entryDateObj = new Date(year, month - 1, day);
+    const currentMonth = entryDateObj.getMonth() + 1; 
+    const currentYear = entryDateObj.getFullYear();
+    const currentMonthStr = `${String(currentMonth).padStart(2, '0')}-${currentYear}`;
+
+    let previousMonthStr;
+    if (currentMonth === 1) {
+        previousMonthStr = `12-${currentYear - 1}`;
+    } else {
+        previousMonthStr = `${String(currentMonth - 1).padStart(2, '0')}-${currentYear}`;
+    }
+
+    const previousMonthReport = await MonthlyReport.findOne({ month: previousMonthStr });
+    const previousMonthClosingBalance = previousMonthReport ? previousMonthReport.closingBalance : 0;
+
+    let currentMonthReport = await MonthlyReport.findOne({ month: currentMonthStr });
+
+    const options = { day: '2-digit', month: '2-digit', year: 'numeric' };
+    const startDate = new Date(currentYear, currentMonth - 1, 1);
+    const endDate   = new Date(currentYear, currentMonth, 0);
+
+    const startDateFormatted = startDate.toLocaleDateString('en-GB', options);
+    const endDateFormatted = endDate.toLocaleDateString('en-GB', options);
+
+    if (!currentMonthReport) {
+        currentMonthReport = new MonthlyReport({
+            month: currentMonthStr,
+            openingBalance: previousMonthClosingBalance, 
+            netBalance: balance, 
+            closingBalance: previousMonthClosingBalance + balance,
+            startDate: startDateFormatted,
+            endDate: endDateFormatted,
+        });
+        await currentMonthReport.save();
+    } else {
+        currentMonthReport.netBalance += balance;
+        currentMonthReport.closingBalance = currentMonthReport.openingBalance + currentMonthReport.netBalance; 
+        await currentMonthReport.save() 
+    }
+
+
     const userUid = req.cookies?.tId;
                 const jwtToken = await getUser(userUid);
                     const { name } = jwtToken;
     try {
         await newSubmission.save();
         res.render("insertedHome" , { msg : `Record successfully inserted against date ${currentDate}`, 
-            username : name , date : currentDate})
+        username : name , date : currentDate , insertion : null})
     } catch (error) {
         console.error('Error submitting form:', error);
         res.status(500).send('Error submitting form');
@@ -378,6 +515,96 @@ app.get("/individualRec/:date" ,async (req , res) => {
         console.log(err);
     }
 })
+
+app.get("/getmonths", async (req, res) => {
+    const userUid = req.cookies?.tId;
+    let name = '';
+
+    if (userUid) {
+        try {
+            const jwtToken = await getUser(userUid);
+            if (jwtToken && jwtToken.name) {
+                name = jwtToken.name;
+            }
+        } catch (err) {
+            console.error('Error decoding user:', err);
+            return res.status(500).send('Error decoding user token');
+        }
+    }
+
+    try {
+        const months = await MonthlyReport.find();
+        console.log(months)
+        const formattedMonths = months.map(month => {
+            return formatMonth(month.month); 
+        });
+        console.log(formattedMonths)
+        res.render("allmonths", { 
+            username: name, 
+            months: formattedMonths, 
+        });
+    } catch (err) {
+        console.error('Error fetching months:', err);
+        res.status(500).send('Error fetching months');
+    }
+});
+
+
+app.get("/getrep/:month", async (req, res) => {
+    const monthYear = req.params.month; 
+
+    const formattedMonth = convertToMonthYear(monthYear);
+
+    const [month, year] = formattedMonth.split('-');
+
+    const startDate = new Date(year, month - 1, 1); 
+    const endDate = new Date(year, month, 0);
+
+    const formattedStartDate = formatDateToYMD(startDate);
+    const formattedEndDate = formatDateToYMD(endDate);
+    
+    console.log(formattedStartDate);
+    console.log(formattedEndDate)
+
+    try {
+
+        const records = await Submission.find({});
+        const filteredRecords = records.filter(record => {
+            const [day, dbMonth, dbYear] = record.date.split('/');
+            function formatDateToYMD(year, month, day) {
+                // Ensure month and day are always 2 digits (e.g., "08" instead of "8")
+                const formattedMonth = (month).toString().padStart(2, '0');
+                const formattedDay = (day).toString().padStart(2, '0');
+                
+                // Return the formatted date in "yyyy-mm-dd" format
+                return `${year}-${formattedMonth}-${formattedDay}`;
+            }
+
+            const recordDate = formatDateToYMD(dbYear, dbMonth, day);
+            console.log(recordDate)
+            return recordDate >= formattedStartDate && recordDate <= formattedEndDate;
+        });
+        console.log(filteredRecords)
+        const monthlyRecord = await MonthlyReport.findOne({
+            month: formattedMonth,
+        });
+
+        console.log(records);
+        
+        res.render('monthReport', {
+            username: "null", 
+            date: new Date().toLocaleDateString(),
+            month: month, 
+            year: year, 
+            records: filteredRecords,
+            monthlyRep : monthlyRecord,
+        });
+    } catch (err) {
+        console.error('Error fetching records for the month:', err);
+        res.status(500).send('Error fetching records for the selected month');
+    }
+});
+
 
 app.listen( PORT , () => {
     console.log("Sever Started")
