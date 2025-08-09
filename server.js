@@ -1,7 +1,11 @@
 require("dotenv").config();
+const conn = require("./controllers/connecttoDB");
 
 const PORT = process.env.PORT || 3000;
-const milkPrice = 140;
+const milkPrice = process.env.MILKPRICE || 140;
+conn(process.env.DB_URL);
+
+
 const express = require("express");
 const moment = require('moment');
 const curdate = require("./controllers/currentdate");
@@ -18,7 +22,6 @@ const { setUser , getUser } = require("./service/auth");
 const { restriction } = require("./middlewares/restriction");
 const { sendOtpEmail, sendpassOTPEmail, sendpassUpdEmail} = require("./service/nodemailer");
 
-const conn = require("./controllers/connecttoDB");
 function formatDateToPKR(date) {
     return new Date(date).toLocaleDateString('en-GB', {
          timeZone: 'Asia/Karachi',
@@ -82,7 +85,6 @@ function formatToDatabaseMonth(monthName, year) {
 }
 
 
-conn("mongodb://127.0.0.1:27017/farm");
 
 
 const app = express();
@@ -325,6 +327,7 @@ app.post("/login" , async (req,res) => {
             return res.status(500).send('Error decoding user token');
         }
     }
+    console.log(name)
     const { email , password } = req.body;
     const user = await verifyUser(email , password);
     if (user){
