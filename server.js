@@ -1,7 +1,6 @@
 require("dotenv").config();
 
-const User = require("./models/users");
-const PORT = 3000;
+const PORT = process.env.PORT || 3000;
 const milkPrice = 140;
 const express = require("express");
 const moment = require('moment');
@@ -9,6 +8,7 @@ const curdate = require("./controllers/currentdate");
 const path = require("path")
 const session = require('express-session');
 const cookieParser = require("cookie-parser");
+const User = require("./models/users");
 const Submission = require("./models/dailyRecord");
 const MonthlyReport = require("./models/monthlyRecord")
 
@@ -434,8 +434,12 @@ app.post("/updatepass" , async (req , res) => {
     }
 })
 
-app.get("/update" , (req , res) => {
-    res.render("updaterecord" , { error : null });
+app.get("/update" , async (req , res) => {
+    const currentDate = curdate();
+    const userUid = req.cookies?.tId;
+                const jwtToken = await getUser(userUid);
+                    const { name } = jwtToken;
+    res.render("updaterecord" , { error : null , username : name , date : currentDate });
 })
 
 app.post("/datetoUpdate" , async (req , res) => {
@@ -447,14 +451,17 @@ app.post("/datetoUpdate" , async (req , res) => {
         const entry = await Submission.findOne({ date: formattedDate });
         const encodedDate = encodeURIComponent(formattedDate);
         console.log(encodedDate)
+        const currentDate = curdate();
+            const userUid = req.cookies?.tId;
+            const jwtToken = await getUser(userUid);
+            const { name } = jwtToken;
         if (entry) {
             res.redirect(`/update/${encodedDate}`);
         } else {
-            res.render("updaterecord" , { error : "No Entry Exists for the given Date" });
+            res.render("updaterecord" , { error : "No Entry Exists for the given Date" , username : name , date : currentDate });
         }
     } catch (err) {
-        res.render("updaterecord" , { error : "Something went wrong! Try Again later" });
-        console.log(err);
+        res.render("updaterecord" , { error : "Something went wrong! Try Again later" , username : name , date : currentDate });
     }
 })
 
@@ -574,6 +581,7 @@ app.get("/getmonths", async (req, res) => {
         console.log(formattedMonths)
         res.render("allmonths", { 
             username: name, 
+            date : curdate(),
             months: formattedMonths, 
         });
     } catch (err) {

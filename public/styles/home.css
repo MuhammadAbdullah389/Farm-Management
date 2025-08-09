@@ -1,3 +1,4 @@
+/* Global Styles */
 * {
     margin: 0;
     padding: 0;
@@ -90,7 +91,7 @@ label {
     display: block;
 }
 
-input{
+input {
     width: 100%;
     padding: 12px;
     margin-bottom: 25px;
@@ -163,4 +164,90 @@ button[type="submit"]:focus {
     box-shadow: 0 0 5px #1abc9c; 
 }
 
+/* Responsive Design */
+@media only screen and (max-width: 1024px) {
+    header h2 {
+        font-size: 30px;
+    }
 
+    nav ul {
+        gap: 15px;
+    }
+
+    form {
+        padding: 25px;
+    }
+
+    input, button {
+        font-size: 14px;
+    }
+}
+
+@media only screen and (max-width: 768px) {
+    header {
+        padding: 30px;
+    }
+
+    header h2 {
+        font-size: 28px;
+    }
+
+    nav {
+        padding: 8px 0;
+    }
+
+    nav ul {
+        flex-direction: column;
+        align-items: center;
+    }
+
+    nav ul li {
+        font-size: 16px;
+        padding: 8px;
+    }
+
+    form {
+        padding: 20px;
+    }
+
+    input, button {
+        font-size: 14px;
+    }
+
+    #logout {
+        font-size: 14px;
+        padding: 8px 16px;
+    }
+}
+
+@media only screen and (max-width: 480px) {
+    body {
+        padding: 10px;
+    }
+
+    header {
+        padding: 20px;
+    }
+
+    header h2 {
+        font-size: 24px;
+    }
+
+    nav ul {
+        gap: 10px;
+    }
+
+    form {
+        padding: 15px;
+    }
+
+    input, button {
+        font-size: 12px;
+        padding: 10px;
+    }
+
+    #logout {
+        font-size: 12px;
+        padding: 6px 12px;
+    }
+}
