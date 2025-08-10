@@ -487,8 +487,23 @@ app.post('/update/:date', async (req, res) => {
                 totalRevenue: totalRevenue,
                 totalExpenditure: totalExpenses,
                 Balance: balance,       
-            },
-        );
+            } );
+        // Get the old daily record before updating
+                    const oldEntry = await Submission.findOne({ date: decodeddate });
+                    const oldBalance = oldEntry ? oldEntry.Balance : 0;
+
+                    // Update the daily record (already done above)
+
+                    // Update the monthly report for this month
+                    const [day, month, year] = decodeddate.split('/');
+                    const currentMonthStr = `${String(Number(month)).padStart(2, '0')}-${year}`;
+                    let currentMonthReport = await MonthlyReport.findOne({ month: currentMonthStr });
+
+                    if (currentMonthReport) {
+                        currentMonthReport.netBalance = currentMonthReport.netBalance - oldBalance + balance;
+                        currentMonthReport.closingBalance = currentMonthReport.openingBalance + currentMonthReport.netBalance;
+                        await currentMonthReport.save();
+                    }
         if (updatedEntry) {
             res.render("insertedHome" , { msg : `Record successfully update against date ${decodeddate}`, 
             username : req.cookies.name , date : decodeddate , insertion : false})
