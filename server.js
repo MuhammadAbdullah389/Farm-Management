@@ -112,17 +112,20 @@ app.get("/", async (req, res) => {
     try {
         const entry = await Submission.findOne({ date: curdate() });
         const encodedDate = encodeURIComponent(curdate());
-
-        if (entry) {
+        if ( req.cookies.role === "user" ){
+                    return res.redirect("/view");
+        }else{
+            if (entry) {
             res.render("insertedHome", { 
                 msg: `Record against date ${curdate()} already exists`, 
-                username: req.session.name, 
+                username: req.cookies.name, 
                 date: curdate(), 
                 link: encodedDate, 
                 insertion: true 
             });
         } else {
             res.redirect("/home");
+        }
         }
     } catch (err) {
         console.error('Error fetching entry:', err);
@@ -134,7 +137,7 @@ app.get("/", async (req, res) => {
 app.get('/view', async (req, res) => {
     const entries = await Submission.find();
     const currentDate = curdate();
-    res.render('reterive', { entries: entries , date : currentDate , username : req.session.name });
+    res.render('reterive', { entries: entries , date : currentDate , username : req.cookies.name , role : req.cookies.role });
 });
 
 app.post('/submit', async (req, res) => {
@@ -159,8 +162,6 @@ app.post('/submit', async (req, res) => {
 
     const totalExpenses = expensesArray.reduce((sum, expense) => sum + expense.amount, 0);
     const totalRevenue = revenuesArray.reduce((sum, revenue) => sum + revenue.amount, 0) + milkRevenue;
-    console.log(milkRevenue)
-    console.log(totalRevenue)
     const balance = totalRevenue - totalExpenses;
 
     const currentDate = curdate();
@@ -220,7 +221,7 @@ app.post('/submit', async (req, res) => {
     try {
         await newSubmission.save();
         res.render("insertedHome" , { msg : `Record successfully inserted against date ${currentDate}`, 
-        username : req.session.name , date : currentDate , insertion : null})
+        username : req.cookies.name , date : currentDate , insertion : null})
     } catch (error) {
         console.error('Error submitting form:', error);
         res.status(500).send('Error submitting form');
@@ -229,7 +230,7 @@ app.post('/submit', async (req, res) => {
 });
 
 app.get("/contact" , (req , res) => {
-    res.render("contactdev")
+    res.render("contactdev" , { role : req.cookies.role})
 })
 
 app.get("/signup" , (req , res) => {
@@ -325,9 +326,8 @@ app.post("/login" , async (req,res) => {
         const token = setUser(user);
         const oneMonth = 30 * 24 * 60 * 60 * 1000;
         res.cookie("tId", token, { expires: new Date(Date.now() + oneMonth), httpOnly: true });
-        
-        req.session.name = user.name;
-        req.session.role = user.role;
+        res.cookie("role", user.role, { expires: new Date(Date.now() + oneMonth), httpOnly: true });
+        res.cookie("name", user.name, { expires: new Date(Date.now() + oneMonth), httpOnly: true });
 
         res.redirect("/home")
     }else {
@@ -415,15 +415,17 @@ app.post("/updatepass" , async (req , res) => {
 })
 
 app.get("/update" , async (req , res) => {
+     if ( req.cookies.role === "user" ){
+        return res.redirect("/view");
+     }else{
     const currentDate = curdate();
-    res.render("updaterecord" , { error : null , username : req.session.name , date : currentDate });
+    res.render("updaterecord" , { error : null , username : req.cookies.name , date : currentDate , role : req.cookies.role });
+     }
 })
 
 app.post("/datetoUpdate" , async (req , res) => {
     const date = req.body.date;
     const formattedDate = formatDateToPKR(date);
-    console.log(date)
-    console.log(formattedDate)
     try {
         const entry = await Submission.findOne({ date: formattedDate });
         const encodedDate = encodeURIComponent(formattedDate);
@@ -431,10 +433,10 @@ app.post("/datetoUpdate" , async (req , res) => {
         if (entry) {
             res.redirect(`/update/${encodedDate}`);
         } else {
-            res.render("updaterecord" , { error : "No Entry Exists for the given Date" , username : req.session.name , date : currentDate });
+            res.render("updaterecord" , { error : "No Entry Exists for the given Date" , username : req.cookies.name , date : currentDate , role : req.cookies.role });
         }
     } catch (err) {
-        res.render("updaterecord" , { error : "Something went wrong! Try Again later" , username : req.session.name , date : currentDate });
+        res.render("updaterecord" , { error : "Something went wrong! Try Again later" , username : req.cookies.name , date : currentDate , role : req.cookies.role });
     }
 })
 
@@ -443,10 +445,8 @@ app.get('/update/:date', async (req, res) => {
     decodeddate = decodeURIComponent(date);
     encodedDate = encodeURIComponent(date);
     try {
-        console.log(decodeddate)
         const entry = await Submission.findOne({ date: decodeddate });
-        console.log(entry)
-            res.render('updatingrec', { entry: entry , postingDate : encodedDate });
+            res.render('updatingrec', { entry: entry , postingDate : encodedDate , role : req.cookies.role });
         }
      catch (err) {
         res.render("updaterecord" , { error : "Something went wrong! Try Again later" });
@@ -473,8 +473,7 @@ app.post('/update/:date', async (req, res) => {
 
     const totalExpenses = expensesArray.reduce((sum, expense) => sum + expense.amount, 0);
     const totalRevenue = revenuesArray.reduce((sum, revenue) => sum + revenue.amount, 0) + milkRevenue;
-    console.log(milkRevenue)
-    console.log(totalRevenue)
+    
     const balance = totalRevenue - totalExpenses;
 
     try {
@@ -492,10 +491,10 @@ app.post('/update/:date', async (req, res) => {
         );
         if (updatedEntry) {
             res.render("insertedHome" , { msg : `Record successfully update against date ${decodeddate}`, 
-            username : req.session.name , date : decodeddate , insertion : false})
+            username : req.cookies.name , date : decodeddate , insertion : false})
         } 
     } catch (err) {
-        res.render("insertedHome" , { msg : `Something went wrong in updatinf record against date ${decodeddate}` ,username : req.session.name , date : decodeddate , insertion : false})
+        res.render("insertedHome" , { msg : `Something went wrong in updatinf record against date ${decodeddate}` ,username : req.cookies.name , date : decodeddate , insertion : false})
         console.log(err);
     }
 });
@@ -515,10 +514,8 @@ app.get("/individualRec/:date" ,async (req , res) => {
     encodedDate = encodeURIComponent(date);
     decodedDate = decodeURIComponent(date);
     try {
-        console.log(decodeddate)
         const entry = await Submission.findOne({ date: decodeddate });
-        console.log(entry)
-        res.render("individualRec" , { username : req.session.name , date : decodedDate , entry : entry})
+        res.render("individualRec" , { username : req.cookies.name , date : decodedDate , entry : entry})
     }
      catch (err) {
         // res.render("updaterecord" , { error : "Something went wrong! Try Again later" });
@@ -533,9 +530,9 @@ app.get("/getmonths", async (req, res) => {
         const formattedMonths = months.map(month => {
             return formatMonth(month.month); 
         });
-        console.log(formattedMonths)
         res.render("allmonths", { 
-            username: req.session.name, 
+            username: req.cookies.name, 
+            role: req.cookies.role,
             date : curdate(),
             months: formattedMonths, 
         });
@@ -558,9 +555,6 @@ app.get("/getrep/:month", async (req, res) => {
 
     const formattedStartDate = formatDateToYMD(startDate);
     const formattedEndDate = formatDateToYMD(endDate);
-    
-    console.log(formattedStartDate);
-    console.log(formattedEndDate)
 
     try {
 
@@ -577,18 +571,15 @@ app.get("/getrep/:month", async (req, res) => {
             }
 
             const recordDate = formatDateToYMD(dbYear, dbMonth, day);
-            console.log(recordDate)
             return recordDate >= formattedStartDate && recordDate <= formattedEndDate;
         });
-        console.log(filteredRecords)
         const monthlyRecord = await MonthlyReport.findOne({
             month: formattedMonth,
         });
 
-        console.log(records);
         
         res.render('monthReport', {
-            username: req.session.name,
+            username: req.cookies.name,
             date: new Date().toLocaleDateString(),
             month: month, 
             year: year, 
@@ -603,5 +594,5 @@ app.get("/getrep/:month", async (req, res) => {
 
 
 app.listen( PORT , () => {
-    console.log("Sever Started")
+    console.log("Sever Started on Port " ,PORT)
 })

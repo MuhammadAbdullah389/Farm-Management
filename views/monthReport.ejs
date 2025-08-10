@@ -14,9 +14,11 @@
 
     <nav>
         <ul>
-            <li><a href="/">Dashboards</a></li>
+            <% if (role === "admin") { %>
+                <li><a href="/">Dashboard</a></li>
+                <li><a href="/update">Update a Record</a></li>
+            <% } %>
             <li><a href="/view">View Records</a></li>
-            <li><a href="/update">Update a Record</a></li>
             <li><a href="/contact">Contact the Developer</a></li>
         </ul>
     </nav>

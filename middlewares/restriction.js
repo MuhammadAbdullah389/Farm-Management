@@ -12,19 +12,24 @@ async function restriction(req, res, next) {
                 const { name, role } = jwtToken;
                 const cDate = curdate();
 
-                const entry = await Submission.findOne({ date: curdate() });
                 const encodedDate = encodeURIComponent(curdate());
 
-                if (entry) {
-                    return res.render("insertedHome", { 
-                        msg: `Record against date ${curdate()} already exists`, 
-                        username: name, 
-                        date: curdate(), 
-                        link: encodedDate, 
-                        insertion: true 
-                    });
-                } else {
-                    return res.render("home", { username: name, date: cDate });
+                if ( role === "user" ){
+                    return res.redirect("/view");
+                }else{
+                    const entry = await Submission.findOne({ date: curdate() });
+
+                        if (entry) {
+                            return res.render("insertedHome", { 
+                                msg: `Record against date ${curdate()} already exists`, 
+                                username: name, 
+                                date: curdate(), 
+                                link: encodedDate, 
+                                insertion: true 
+                            });
+                        } else {
+                            return res.render("home", { username: name, date: cDate });
+                        }
                 }
             } else {
                 return res.redirect("/login");

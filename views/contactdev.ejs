@@ -14,9 +14,11 @@
 
         <nav>
          <ul>
-             <li><a href="/">Dashboard</a></li>
+            <% if (role === "admin") { %>
+                <li><a href="/">Dashboard</a></li>
+                <li><a href="/update">Update a Record</a></li>
+            <% } %>
             <li><a href="/view">View Records</a></li>
-            <li><a href="/update">Update a Record</a></li>
             <li><a href="/getmonths">Get Reports</a></li>
          </ul>
         </nav>
@@ -46,12 +48,11 @@
         <section class="social-media">
             <h3>Follow Me</h3>
             <ul>
-                <li><a href="https://twitter.com/username" target="_blank">Twitter</a></li>
-                <li><a href="https://www.instagram.com/username" target="_blank">Instagram</a></li>
-                <li><a href="https://www.facebook.com/username" target="_blank">Facebook</a></li>
+                <li><a href="https://www.instagram.com/muhammad_abdullah2467/" target="_blank">Instagram</a></li>
+                <li><a href="https://www.facebook.com/profile.php?id=100040368728656" target="_blank">Facebook</a></li>
             </ul>
         </section>
-
+        <button onclick="location.href='/logout'" id="logout">LOGOUT</button>
         <footer>
             <p>&copy; 2025 Muhammad Abdullah. All rights reserved.</p>
         </footer>
