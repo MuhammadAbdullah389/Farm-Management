@@ -107,28 +107,6 @@ app.use(express.static(path.join(__dirname, 'public')));
 app.use(express.urlencoded({extended : true}))
 app.use(express.json());
 
-// app.get("/" , async (req , res) => {
-//     const userUid = req.cookies?.tId;
-//         if(userUid){
-//             const jwtToken = await getUser(userUid);
-//                     const { name } = jwtToken;
-//         }
-//     const entry = await Submission.findOne({ date: curdate() });
-//     encodedDate = encodeURIComponent(curdate());
-//     try {
-//         const entry = await Submission.findOne({ editdate: curdate() });
-//     }
-//      catch (err) {
-//         console.log(err)
-//     }
-//     if (entry){
-//         res.render("insertedHome" , { msg : `Record against date ${curdate()} already exists`, 
-//             username : name , date : curdate() , link : encodedDate , insertion : true})
-//     }else{
-//         res.redirect("/home");
-//     }
-// });
-
 app.get("/", async (req, res) => {
 
     try {
