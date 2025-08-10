@@ -533,8 +533,8 @@ app.get("/individualRec/:date" ,async (req , res) => {
     encodedDate = encodeURIComponent(date);
     decodedDate = decodeURIComponent(date);
     try {
-        const entry = await Submission.findOne({ date: decodeddate });
-        res.render("individualRec" , { username : req.cookies.name , date : decodedDate , entry : entry})
+        const entry = await Submission.findOne({ date: decodedDate });
+        res.render("individualRec" , { username : req.cookies.name , date : decodedDate , entry : entry , role : req.cookies.role })
     }
      catch (err) {
         // res.render("updaterecord" , { error : "Something went wrong! Try Again later" });

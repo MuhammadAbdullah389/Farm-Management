@@ -8,12 +8,12 @@
 body {
     display: flex;
     flex-direction: column;
-    min-height: 100vh; /* Ensure the body fills the viewport */
-    justify-content: space-between; /* Space out the content */
+    min-height: 100vh;
+    justify-content: flex-start; /* Ensure the content starts at the top */
     font-family: 'Arial', sans-serif;
     background-color: #1e2a47;
     color: #f5f5f5;
-    padding: 20px;
+    padding: 10px;
     line-height: 1.6;
 }
 
@@ -22,16 +22,16 @@ header {
     text-align: center;
     background-color: #2d3b59;
     color: #fff;
-    padding: 40px;
+    padding: 20px;  /* Reduced padding */
     border-radius: 12px;
-    margin-bottom: 30px;
+    margin-bottom: 10px;  /* Reduced margin-bottom to close gap */
     box-shadow: 0 6px 18px rgba(0, 0, 0, 0.3);
 }
 
 header h2 {
     font-size: 36px;
     font-weight: bold;
-    margin-bottom: 15px;
+    margin-bottom: 10px;
 }
 
 header h4 {
@@ -42,12 +42,12 @@ header h4 {
 
 /* Navigation Styles */
 nav {
-    margin-bottom: 30px;
+    margin-bottom: 0;  /* Remove bottom margin */
     background-color: #34495e;
     border-radius: 10px;
     padding: 12px 0;
     display: flex;
-    justify-content: center; /* Center the navigation */
+    justify-content: center;
 }
 
 nav ul {
@@ -81,7 +81,7 @@ nav ul li a:hover {
 h3 {
     color: #1abc9c;
     font-size: 28px;
-    margin-bottom: 25px;
+    margin-bottom: 20px;  /* Reduced margin-bottom */
     text-align: center;
 }
 
@@ -137,47 +137,29 @@ button {
     cursor: pointer;
     box-shadow: 0 6px 18px rgba(0, 0, 0, 0.3);
     transition: background-color 0.3s ease, transform 0.3s ease;
-    align-self: center; /* Center button horizontally */
-    margin-top: 20px; /* Add margin for spacing */
+    align-self: center;
+    margin-top: 10px; /* Set margin-top to a small value */
+    position: absolute;
+        bottom: 0;
 }
 
 /* Button hover effect */
 button:hover {
     background-color: #16a085;
-    transform: translateY(-3px); /* Slightly move up on hover */
+    transform: translateY(-3px);
 }
 
 /* Button active effect */
 button:active {
-    transform: translateY(1px); /* Slightly move down when clicked */
+    transform: translateY(1px);
 }
 
 button:focus {
     outline: none;
-    box-shadow: 0 0 5px #1abc9c; /* Outline effect when focused */
+    box-shadow: 0 0 5px #1abc9c;
 }
 
 /* Responsive Design */
-
-/* Tablet Design */
-@media only screen and (max-width: 1024px) {
-    header h2 {
-        font-size: 30px;
-    }
-
-    nav ul {
-        gap: 15px;
-    }
-
-    div ul {
-        grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); /* Smaller columns for tablets */
-    }
-
-    button {
-        font-size: 14px;
-        padding: 10px 16px;
-    }
-}
 
 /* Mobile Design (max-width: 768px) */
 @media only screen and (max-width: 768px) {
@@ -204,6 +186,10 @@ button:focus {
         font-size: 16px;
         padding: 10px 18px;
     }
+
+    h3 {
+        font-size: 24px;  /* Adjust font size of the heading */
+    }
 }
 
 /* Extra Small Mobile (for smaller screens like portrait mode phones) */
@@ -213,19 +199,30 @@ button:focus {
     }
 
     header {
-        padding: 20px;
+        padding: 15px; /* Reduce padding for smaller screens */
     }
 
     header h2 {
-        font-size: 24px;
+        font-size: 22px;  /* Adjust header font size */
     }
 
     nav ul {
         gap: 10px;
     }
 
+    h3 {
+        margin : 40px 0 0 0;
+    }
+
     div ul li {
         font-size: 14px;
-        padding: 10px;
+        padding: 8px;  /* Smaller padding */
+        margin: 0 0 20px 0;
+    }
+
+    button {
+        font-size: 14px;
+        padding: 8px 16px;
+        width: 100%;  /* Make button full width on very small screens */
     }
 }
