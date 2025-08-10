@@ -14,6 +14,10 @@ const submissionSchema = new mongoose.Schema({
         type: Number, 
         required: true 
     },
+    milkPrice: { 
+        type: Number, 
+        required: true 
+    },
     expenses: [
         {
             description: { 

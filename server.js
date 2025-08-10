@@ -207,6 +207,7 @@ app.post('/submit', async (req, res) => {
         date: currentDate,
         morningMilkQuantity: morningMilk,
         eveningMilkQuantity: eveningMilk,
+        milkPrice: milkPrice,
         expenses: expensesArray,
         revenues: revenuesArray,
         totalRevenue: totalRevenue,
@@ -312,13 +313,21 @@ app.get("/login", (req, res) => {
 });
 
 app.post("/login" , async (req,res) => {
-    const userUid = req.cookies?.tId;
+    
+    const { email , password } = req.body;
+    const user = await verifyUser(email , password);
+    if (user){
+        const token = setUser(user);
+        const oneMonth = 30 * 24 * 60 * 60 * 1000;
+        
+        res.cookie("tId", token, { expires: new Date(Date.now() + oneMonth), httpOnly: true });
+        const userUid = req.cookies?.tId;
 
     if (userUid) {
         try {
             const jwtToken = await getUser(userUid);
             if (jwtToken && jwtToken.name) {
-                name = jwtToken.name;
+                username = jwtToken.name;
             } else {
                 console.log('JWT token missing name field.');
             }
@@ -327,13 +336,7 @@ app.post("/login" , async (req,res) => {
             return res.status(500).send('Error decoding user token');
         }
     }
-    console.log(name)
-    const { email , password } = req.body;
-    const user = await verifyUser(email , password);
-    if (user){
-        const token = setUser(user);
-        const oneMonth = 30 * 24 * 60 * 60 * 1000;
-        res.cookie("tId", token, { expires: new Date(Date.now() + oneMonth), httpOnly: true });
+    console.log(username)
         try {
             const entry = await Submission.findOne({ date: curdate() });
             const encodedDate = encodeURIComponent(curdate());
@@ -341,7 +344,7 @@ app.post("/login" , async (req,res) => {
             if (entry) {
                 res.render("insertedHome", { 
                     msg: `Record against date ${curdate()} already exists`, 
-                    username: name, 
+                    username: username, 
                     date: curdate(), 
                     link: encodedDate, 
                     insertion: true 
