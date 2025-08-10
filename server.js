@@ -580,6 +580,7 @@ app.get("/getrep/:month", async (req, res) => {
         
         res.render('monthReport', {
             username: req.cookies.name,
+            role : req.cookies.role,
             date: new Date().toLocaleDateString(),
             month: month, 
             year: year, 
