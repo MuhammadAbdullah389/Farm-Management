@@ -478,6 +478,7 @@ app.post('/update/:date', async (req, res) => {
     console.log("Balance: ", balance);
 
     try {
+        const oldEntry = await Submission.findOne({ date: decodeddate });
         const updatedEntry = await Submission.findOneAndUpdate(
             { date: decodeddate },
             {
@@ -490,7 +491,6 @@ app.post('/update/:date', async (req, res) => {
                 Balance: balance,       
             } );
         // Get the old daily record before updating
-                    const oldEntry = await Submission.findOne({ date: decodeddate });
                     const oldBalance = oldEntry ? oldEntry.Balance : 0;
                     console.log("Old Balance: ", oldBalance);
                     // Update the daily record (already done above)
