@@ -92,12 +92,15 @@ const app = express();
 app.set("view engine" , "ejs");
 app.set("views" , "./views")
 
+const oneMonth = 30 * 24 * 60 * 60 * 1000;
 
 app.use(session({
     secret: 'your-secret-ke',
     resave: false,
     saveUninitialized: true,
+    cookie: { maxAge: oneMonth } 
 }));
+
 app.use(cookieParser());
 app.use("/home" , restriction);
 app.use(express.static(path.join(__dirname, 'public')));
@@ -127,22 +130,6 @@ app.use(express.json());
 // });
 
 app.get("/", async (req, res) => {
-    const userUid = req.cookies?.tId;
-    let name = '';
-
-    if (userUid) {
-        try {
-            const jwtToken = await getUser(userUid);
-            if (jwtToken && jwtToken.name) {
-                name = jwtToken.name;
-            } else {
-                console.log('JWT token missing name field.');
-            }
-        } catch (err) {
-            console.error('Error getting user:', err);
-            return res.status(500).send('Error decoding user token');
-        }
-    }
 
     try {
         const entry = await Submission.findOne({ date: curdate() });
@@ -151,7 +138,7 @@ app.get("/", async (req, res) => {
         if (entry) {
             res.render("insertedHome", { 
                 msg: `Record against date ${curdate()} already exists`, 
-                username: name, 
+                username: req.session.name, 
                 date: curdate(), 
                 link: encodedDate, 
                 insertion: true 
@@ -169,10 +156,7 @@ app.get("/", async (req, res) => {
 app.get('/view', async (req, res) => {
     const entries = await Submission.find();
     const currentDate = curdate();
-    const userUid = req.cookies?.tId;
-                const jwtToken = await getUser(userUid);
-                    const { name } = jwtToken;
-    res.render('reterive', { entries: entries , date : currentDate , username : name});
+    res.render('reterive', { entries: entries , date : currentDate , username : req.session.name });
 });
 
 app.post('/submit', async (req, res) => {
@@ -255,15 +239,10 @@ app.post('/submit', async (req, res) => {
         currentMonthReport.closingBalance = currentMonthReport.openingBalance + currentMonthReport.netBalance; 
         await currentMonthReport.save() 
     }
-
-
-    const userUid = req.cookies?.tId;
-                const jwtToken = await getUser(userUid);
-                    const { name } = jwtToken;
     try {
         await newSubmission.save();
         res.render("insertedHome" , { msg : `Record successfully inserted against date ${currentDate}`, 
-        username : name , date : currentDate , insertion : null})
+        username : req.session.name , date : currentDate , insertion : null})
     } catch (error) {
         console.error('Error submitting form:', error);
         res.status(500).send('Error submitting form');
@@ -312,50 +291,67 @@ app.get("/login", (req, res) => {
     res.render("login.ejs" , {error : null});
 });
 
-app.post("/login" , async (req,res) => {
+// app.post("/login" , async (req,res) => {
     
+//     const { email , password } = req.body;
+//     const user = await verifyUser(email , password);
+//     if (user){
+//         const token = setUser(user);
+//         const oneMonth = 30 * 24 * 60 * 60 * 1000;
+        
+//         res.cookie("tId", token, { expires: new Date(Date.now() + oneMonth), httpOnly: true });
+//         const userUid = req.cookies?.tId;
+
+//     if (userUid) {
+//         try {
+//             const jwtToken = await getUser(userUid);
+//             if (jwtToken && jwtToken.name) {
+//                 username = jwtToken.name;
+//             } else {
+//                 console.log('JWT token missing name field.');
+//             }
+//         } catch (err) {
+//             console.error('Error getting user:', err);
+//             return res.status(500).send('Error decoding user token');
+//         }
+//     }
+//     console.log(username)
+//         try {
+//             const entry = await Submission.findOne({ date: curdate() });
+//             const encodedDate = encodeURIComponent(curdate());
+
+//             if (entry) {
+//                 res.render("insertedHome", { 
+//                     msg: `Record against date ${curdate()} already exists`, 
+//                     username: username, 
+//                     date: curdate(), 
+//                     link: encodedDate, 
+//                     insertion: true 
+//                 });
+//             } else {
+//                 res.redirect("/home");
+//             }
+//         } catch (err) {
+//             console.error('Error fetching entry:', err);
+//             res.status(500).send('Error fetching entry');
+//         }
+//     }else {
+//         res.render("login" , { error : "Invalid Credentials!"})
+//     }
+// });
+
+app.post("/login" , async (req,res) => {
     const { email , password } = req.body;
     const user = await verifyUser(email , password);
     if (user){
         const token = setUser(user);
         const oneMonth = 30 * 24 * 60 * 60 * 1000;
-        
         res.cookie("tId", token, { expires: new Date(Date.now() + oneMonth), httpOnly: true });
-        const userUid = req.cookies?.tId;
+        
+        req.session.name = user.name;
+        req.session.role = user.role;
 
-    if (userUid) {
-        try {
-            const jwtToken = await getUser(userUid);
-            if (jwtToken && jwtToken.name) {
-                username = jwtToken.name;
-            } else {
-                console.log('JWT token missing name field.');
-            }
-        } catch (err) {
-            console.error('Error getting user:', err);
-            return res.status(500).send('Error decoding user token');
-        }
-    }
-    console.log(username)
-        try {
-            const entry = await Submission.findOne({ date: curdate() });
-            const encodedDate = encodeURIComponent(curdate());
-
-            if (entry) {
-                res.render("insertedHome", { 
-                    msg: `Record against date ${curdate()} already exists`, 
-                    username: username, 
-                    date: curdate(), 
-                    link: encodedDate, 
-                    insertion: true 
-                });
-            } else {
-                res.redirect("/home");
-            }
-        } catch (err) {
-            console.error('Error fetching entry:', err);
-            res.status(500).send('Error fetching entry');
-        }
+        res.redirect("/home")
     }else {
         res.render("login" , { error : "Invalid Credentials!"})
     }
@@ -442,10 +438,7 @@ app.post("/updatepass" , async (req , res) => {
 
 app.get("/update" , async (req , res) => {
     const currentDate = curdate();
-    const userUid = req.cookies?.tId;
-                const jwtToken = await getUser(userUid);
-                    const { name } = jwtToken;
-    res.render("updaterecord" , { error : null , username : name , date : currentDate });
+    res.render("updaterecord" , { error : null , username : req.session.name , date : currentDate });
 })
 
 app.post("/datetoUpdate" , async (req , res) => {
@@ -456,18 +449,14 @@ app.post("/datetoUpdate" , async (req , res) => {
     try {
         const entry = await Submission.findOne({ date: formattedDate });
         const encodedDate = encodeURIComponent(formattedDate);
-        console.log(encodedDate)
         const currentDate = curdate();
-            const userUid = req.cookies?.tId;
-            const jwtToken = await getUser(userUid);
-            const { name } = jwtToken;
         if (entry) {
             res.redirect(`/update/${encodedDate}`);
         } else {
-            res.render("updaterecord" , { error : "No Entry Exists for the given Date" , username : name , date : currentDate });
+            res.render("updaterecord" , { error : "No Entry Exists for the given Date" , username : req.session.name , date : currentDate });
         }
     } catch (err) {
-        res.render("updaterecord" , { error : "Something went wrong! Try Again later" , username : name , date : currentDate });
+        res.render("updaterecord" , { error : "Something went wrong! Try Again later" , username : req.session.name , date : currentDate });
     }
 })
 
@@ -510,10 +499,6 @@ app.post('/update/:date', async (req, res) => {
     console.log(totalRevenue)
     const balance = totalRevenue - totalExpenses;
 
-    const userUid = req.cookies?.tId;
-                const jwtToken = await getUser(userUid);
-                    const { name } = jwtToken;
-
     try {
         const updatedEntry = await Submission.findOneAndUpdate(
             { date: decodeddate },
@@ -529,32 +514,33 @@ app.post('/update/:date', async (req, res) => {
         );
         if (updatedEntry) {
             res.render("insertedHome" , { msg : `Record successfully update against date ${decodeddate}`, 
-            username : name , date : decodeddate , insertion : false})
+            username : req.session.name , date : decodeddate , insertion : false})
         } 
     } catch (err) {
-        res.render("insertedHome" , { msg : `Something went wrong in updatinf record against date ${decodeddate}` ,username : name , date : decodeddate , insertion : false})
+        res.render("insertedHome" , { msg : `Something went wrong in updatinf record against date ${decodeddate}` ,username : req.session.name , date : decodeddate , insertion : false})
         console.log(err);
     }
 });
 
 app.get("/logout" , (req , res) => {
     res.clearCookie("tId");
-    res.render("login" , { error : null })
+    req.session.destroy(err => {
+        if (err) {
+            console.log("Session destruction error:", err);
+        }
+        res.render("login", { error: null });
+    });
 })
 
 app.get("/individualRec/:date" ,async (req , res) => {
     const date = req.params.date;
-    decodeddate = decodeURIComponent(date);
     encodedDate = encodeURIComponent(date);
-    const userUid = req.cookies?.tId;
-                const jwtToken = await getUser(userUid);
-                    const { name } = jwtToken;
     decodedDate = decodeURIComponent(date);
     try {
         console.log(decodeddate)
         const entry = await Submission.findOne({ date: decodeddate });
         console.log(entry)
-        res.render("individualRec" , { username : name , date : decodedDate , entry : entry})
+        res.render("individualRec" , { username : req.session.name , date : decodedDate , entry : entry})
     }
      catch (err) {
         // res.render("updaterecord" , { error : "Something went wrong! Try Again later" });
@@ -563,30 +549,15 @@ app.get("/individualRec/:date" ,async (req , res) => {
 })
 
 app.get("/getmonths", async (req, res) => {
-    const userUid = req.cookies?.tId;
-    let name = '';
-
-    if (userUid) {
-        try {
-            const jwtToken = await getUser(userUid);
-            if (jwtToken && jwtToken.name) {
-                name = jwtToken.name;
-            }
-        } catch (err) {
-            console.error('Error decoding user:', err);
-            return res.status(500).send('Error decoding user token');
-        }
-    }
 
     try {
         const months = await MonthlyReport.find();
-        console.log(months)
         const formattedMonths = months.map(month => {
             return formatMonth(month.month); 
         });
         console.log(formattedMonths)
         res.render("allmonths", { 
-            username: name, 
+            username: req.session.name, 
             date : curdate(),
             months: formattedMonths, 
         });
@@ -598,21 +569,6 @@ app.get("/getmonths", async (req, res) => {
 
 
 app.get("/getrep/:month", async (req, res) => {
-     const userUid = req.cookies?.tId;
-
-    if (userUid) {
-        try {
-            const jwtToken = await getUser(userUid);
-            if (jwtToken && jwtToken.name) {
-                name = jwtToken.name;
-            } else {
-                console.log('JWT token missing name field.');
-            }
-        } catch (err) {
-            console.error('Error getting user:', err);
-            return res.status(500).send('Error decoding user token');
-        }
-    }
     const monthYear = req.params.month; 
 
     const formattedMonth = convertToMonthYear(monthYear);
@@ -654,7 +610,7 @@ app.get("/getrep/:month", async (req, res) => {
         console.log(records);
         
         res.render('monthReport', {
-            username: name, 
+            username: req.session.name,
             date: new Date().toLocaleDateString(),
             month: month, 
             year: year, 

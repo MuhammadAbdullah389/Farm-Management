@@ -1,5 +1,6 @@
 const { getUser } = require("../service/auth");
 const curdate = require("../controllers/currentdate");
+const Submission = require("../models/dailyRecord");
 
 async function restriction(req, res, next) {
     try {
@@ -8,21 +9,36 @@ async function restriction(req, res, next) {
         if (userUid) {
             const jwtToken = await getUser(userUid);  
             if (jwtToken) {
-                const { name } = jwtToken;
-                const str = `${name}`
+                const { name, role } = jwtToken;
                 const cDate = curdate();
-               return res.render("home" , { username : str , date : cDate});
+
+                const entry = await Submission.findOne({ date: curdate() });
+                const encodedDate = encodeURIComponent(curdate());
+
+                if (entry) {
+                    return res.render("insertedHome", { 
+                        msg: `Record against date ${curdate()} already exists`, 
+                        username: name, 
+                        date: curdate(), 
+                        link: encodedDate, 
+                        insertion: true 
+                    });
+                } else {
+                    return res.render("home", { username: name, date: cDate });
+                }
+            } else {
+                return res.redirect("/login");
             }
         }
         if (!req.originalUrl.includes("/login")) {
             return res.redirect("/login");
         }
         return res.render("login");
-        
     } catch (error) {
         console.error("Authentication error:", error);
-        res.redirect("/login");
-    }}
+        return res.redirect("/login");
+    }
+}
 module.exports = {
     restriction,
 };
