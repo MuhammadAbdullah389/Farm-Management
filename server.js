@@ -475,6 +475,7 @@ app.post('/update/:date', async (req, res) => {
     const totalRevenue = revenuesArray.reduce((sum, revenue) => sum + revenue.amount, 0) + milkRevenue;
     
     const balance = totalRevenue - totalExpenses;
+    console.log("Balance: ", balance);
 
     try {
         const updatedEntry = await Submission.findOneAndUpdate(
@@ -491,7 +492,7 @@ app.post('/update/:date', async (req, res) => {
         // Get the old daily record before updating
                     const oldEntry = await Submission.findOne({ date: decodeddate });
                     const oldBalance = oldEntry ? oldEntry.Balance : 0;
-
+                    console.log("Old Balance: ", oldBalance);
                     // Update the daily record (already done above)
 
                     // Update the monthly report for this month
@@ -502,6 +503,9 @@ app.post('/update/:date', async (req, res) => {
                     if (currentMonthReport) {
                         currentMonthReport.netBalance = currentMonthReport.netBalance - oldBalance + balance;
                         currentMonthReport.closingBalance = currentMonthReport.openingBalance + currentMonthReport.netBalance;
+                        console.log("Updated Monthly Report: ", currentMonthReport);
+                        console.log("New Balance: ", currentMonthReport.netBalance);
+                        console.log("New Closing Balance: ", currentMonthReport.closingBalance);
                         await currentMonthReport.save();
                     }
         if (updatedEntry) {
