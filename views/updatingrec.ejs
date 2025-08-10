@@ -26,12 +26,12 @@
     <form action="/update/<%= postingDate %>" method="POST">
         <div>
             <label for="morningMilk">Morning Milk Quantity:</label>
-            <input type="number" id="morningMilk" name="morningMilk" value="<%= entry.morningMilkQuantity %>" required>
+            <input type="number" id="morningMilk" name="morningMilk" value="<%= entry.morningMilkQuantity %>" required step="0.01">
         </div>
 
         <div>
             <label for="eveningMilk">Evening Milk Quantity:</label>
-            <input type="number" id="eveningMilk" name="eveningMilk" value="<%= entry.eveningMilkQuantity %>" required>
+            <input type="number" id="eveningMilk" name="eveningMilk" value="<%= entry.eveningMilkQuantity %>" required step="0.01">
         </div>
 
         <div id="expenseContainer">
