@@ -10,10 +10,14 @@ async function restrictAll(req, res, next) {
                 return next();
             }
         }
-        // If not authenticated, allow /login and /signup routes through
+        // Allow public routes through
         if (
             req.originalUrl.includes("/login") ||
-            req.originalUrl.includes("/signup")
+            req.originalUrl.includes("/signup") ||
+            req.originalUrl.includes("/verify") ||
+            req.originalUrl.includes("/mailforUpdate") ||
+            req.originalUrl.includes("/passOTPverify") ||
+            req.originalUrl.includes("/updatepass")
         ) {
             return next();
         }
