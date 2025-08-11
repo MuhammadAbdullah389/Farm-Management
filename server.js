@@ -20,6 +20,7 @@ const { verifyUser } = require("./controllers/verifyUser");
 const { saveUserToDb } = require("./controllers/saveUser");
 const { setUser , getUser } = require("./service/auth");
 const { restriction } = require("./middlewares/restriction");
+const { restrictAll } = require("./middlewares/restrictAll");
 const { sendOtpEmail, sendpassOTPEmail, sendpassUpdEmail} = require("./service/nodemailer");
 
 function formatDateToPKR(date) {
@@ -104,6 +105,7 @@ app.use(session({
 app.use(cookieParser());
 app.use("/home" , restriction);
 app.use(express.static(path.join(__dirname, 'public')));
+app.use(restrictAll)
 app.use(express.urlencoded({extended : true}))
 app.use(express.json());
 
