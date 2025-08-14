@@ -135,6 +135,9 @@ app.get("/", async (req, res) => {
     }
 });
 
+// app.get("/" , (req , res) => {
+//     res.render("warning");
+// })
 
 app.get('/view', async (req, res) => {
     const entries = await Submission.find();
@@ -165,8 +168,20 @@ app.post('/submit', async (req, res) => {
     const totalExpenses = expensesArray.reduce((sum, expense) => sum + expense.amount, 0);
     const totalRevenue = revenuesArray.reduce((sum, revenue) => sum + revenue.amount, 0) + milkRevenue;
     const balance = totalRevenue - totalExpenses;
-
+    
     const currentDate = curdate();
+
+    const existingSubmission = await Submission.findOne({ date: currentDate });
+
+    if (existingSubmission) {
+        // If record already exists, prevent both submission and monthly report insertion
+        return res.render("insertedHome", {
+            msg: `A record already exists for the date ${currentDate}. Try Updating.`,
+            username: req.cookies.name,
+            date: currentDate,
+            insertion: true
+        });
+    }
 
     const newSubmission = new Submission({
         date: currentDate,
