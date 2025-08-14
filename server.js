@@ -172,14 +172,16 @@ app.post('/submit', async (req, res) => {
     const currentDate = curdate();
 
     const existingSubmission = await Submission.findOne({ date: currentDate });
-
+    console.log(currentDate)
+    console.log(existingSubmission);
     if (existingSubmission) {
+        console.log("executed")
         // If record already exists, prevent both submission and monthly report insertion
         return res.render("insertedHome", {
             msg: `A record already exists for the date ${currentDate}. Try Updating.`,
             username: req.cookies.name,
             date: currentDate,
-            insertion: true
+            insertion: false
         });
     }
 
